@@ -17,7 +17,19 @@ namespace Soong
             {
                 foreach (XmlNode refNode in currentNode.SelectNodes(reference.InnerText))
                 {
-                    reference.ParentNode.InsertBefore(reference.OwnerDocument.ImportNode(refNode,true), reference);
+                    XmlNode addNode;
+                    XmlNode wrapWith = reference.Attributes.GetNamedItem("WrapWith");
+                    if (wrapWith == null || wrapWith.Value.NullOrEmpty())
+                    {
+                        addNode = reference.OwnerDocument.ImportNode(refNode, true);
+                    }
+                    else
+                    {
+                        // if the xpath node has an attribute "WrapWith", create an element with that name as a parent for each matched node before adding it.
+                        addNode = reference.OwnerDocument.CreateNode("element", wrapWith.Value, "");
+                        addNode.AppendChild(reference.OwnerDocument.ImportNode(refNode, true));
+                    }
+                    reference.ParentNode.InsertBefore(addNode, reference);
                 }
                 reference.ParentNode.RemoveChild(reference);
             }
